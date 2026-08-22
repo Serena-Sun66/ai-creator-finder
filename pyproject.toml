@@ -36,6 +36,7 @@ dependencies = [
     "coze-coding-dev-sdk>=0.5.19",
     "rich>=14,<15",
     "chardet>=5.2,<6",
+]
 
 [tool.uv]
 # 使用阿里云镜像作为默认源，替代 pypi.org
@@ -43,9 +44,7 @@ dependencies = [
 url = "https://mirrors.aliyun.com/pypi/simple/"
 default = true
 
-# pypi 仅供 [tool.uv.sources] 显式引用：阿里云镜像同步 PyPI 新版有延迟（小时级），
-# 当某个内部包的预发布版（如 a/b/rc 后缀）刚 push 到官方 PyPI 还未同步到镜像时，
-# 临时让该包从 PyPI 取，避免 lock/install 失败。explicit=true 保证不影响其他包的解析。
+# pypi 仅供 [tool.uv.sources] 显式引用
 [[tool.uv.index]]
 name = "pypi"
 url = "https://pypi.org/simple/"
