@@ -1,187 +1,256 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Creator Finder</title>
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      padding: 40px 20px;
-    }
-    .container { width: 100%; max-width: 800px; }
-    .header { text-align: center; margin-bottom: 32px; color: #fff; }
-    .header h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 12px; }
-    .header p { font-size: 1.1rem; opacity: 0.85; }
-    
-    .card {
-      background: rgba(255, 255, 255, 0.95);
-      border-radius: 16px;
-      padding: 32px;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
-      margin-bottom: 24px;
-    }
-    
-    .input-group { display: flex; gap: 12px; margin-bottom: 16px; }
-    .input-group input {
-      flex: 1;
-      padding: 14px 20px;
-      border: 2px solid #e2e8f0;
-      border-radius: 10px;
-      font-size: 1rem;
-      outline: none;
-      transition: all 0.3s;
-    }
-    .input-group input:focus { border-color: #667eea; }
-    .input-group button {
-      padding: 14px 28px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: #fff;
-      border: none;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.3s;
-    }
-    .input-group button:hover { opacity: 0.9; }
-    .input-group button:disabled { opacity: 0.6; cursor: not-allowed; }
-    
-    .hint { font-size: 0.875rem; color: #718096; }
-    
-    .result-title {
-      font-size: 1.25rem;
-      font-weight: 600;
-      color: #2d3748;
-      margin-bottom: 16px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .status-tag {
-      font-size: 0.75rem;
-      padding: 4px 12px;
-      border-radius: 20px;
-      background: #edf2f7;
-      color: #4a5568;
-    }
-    
-    #result-content {
-      color: #2d3748;
-      line-height: 1.7;
-      min-height: 100px;
-      word-break: break-word;
-    }
-    #result-content p { margin-bottom: 12px; }
-    #result-content ul, #result-content ol { padding-left: 20px; margin-bottom: 12px; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Creator Finder</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            padding: 40px 20px;
+            color: #333;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 10px;
+        }
+
+        .header h1 {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+        }
+
+        .header p {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 10px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: #667eea;
+        }
+
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0 28px;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #5a67d8;
+        }
+
+        button:disabled {
+            background: #a0aec0;
+            cursor: not-allowed;
+        }
+
+        .hint {
+            font-size: 0.85rem;
+            color: #718096;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .result-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .status-badge {
+            font-size: 0.85rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 500;
+            display: none;
+        }
+
+        .status-badge.loading {
+            display: inline-block;
+            background: #ebf8ff;
+            color: #3182ce;
+        }
+
+        .status-badge.error {
+            display: inline-block;
+            background: #fed7d7;
+            color: #e53e3e;
+        }
+
+        .result-content {
+            min-height: 120px;
+            line-height: 1.6;
+            color: #4a5568;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>AI Creator Finder</h1>
-      <p>帮助海外 AI 产品运营人员，在找达人之前快速确定「应该找什么样的达人」</p>
+    <div class="container">
+        <div class="header">
+            <h1>AI Creator Finder</h1>
+            <p>帮助海外 AI 产品运营人员，在找达人之前快速确定「应该找什么样的达人」</p>
+        </div>
+
+        <div class="card">
+            <div class="input-group">
+                <input type="text" id="queryInput" placeholder="chatGPT 美国 tiktok" value="chatGPT 美国 tiktok">
+                <button id="generateBtn" onclick="generateStrategy()">Generate</button>
+            </div>
+            <div class="hint">输入格式：AI 产品名称 + 目标国家 + 社交媒体平台</div>
+        </div>
+
+        <div class="card">
+            <div class="result-header">
+                <div class="result-title">生成结果</div>
+                <div id="statusBadge" class="status-badge"></div>
+            </div>
+            <div id="resultContent" class="result-content">等待生成...</div>
+        </div>
     </div>
 
-    <div class="card">
-      <div class="input-group">
-        <input type="text" id="query-input" placeholder="例如：ChatGPT, 美国, TikTok" />
-        <button id="generate-btn" onclick="handleGenerate()">Generate</button>
-      </div>
-      <div class="hint">输入格式：AI 产品名称 + 目标国家 + 社交媒体平台</div>
-    </div>
+    <script>
+        async function generateStrategy() {
+            const input = document.getElementById('queryInput');
+            const btn = document.getElementById('generateBtn');
+            const statusBadge = document.getElementById('statusBadge');
+            const resultContent = document.getElementById('resultContent');
 
-    <div class="card">
-      <div class="result-title">
-        <span>生成结果</span>
-        <span class="status-tag" id="status-tag">等待输入</span>
-      </div>
-      <div id="result-content">未收到有效响应，请稍后重试。</div>
-    </div>
-  </div>
-
-  <script>
-    async function handleGenerate() {
-      const inputEl = document.getElementById('query-input');
-      const btnEl = document.getElementById('generate-btn');
-      const statusEl = document.getElementById('status-tag');
-      const resultEl = document.getElementById('result-content');
-      
-      const query = inputEl.value.trim();
-      if (!query) {
-        alert('请输入查询内容！');
-        return;
-      }
-
-      btnEl.disabled = true;
-      statusEl.textContent = '生成中...';
-      statusEl.style.background = '#ebf8ff';
-      statusEl.style.color = '#3182ce';
-      resultEl.innerHTML = '正在为您匹配推荐达人类型，请稍候...';
-
-      try {
-        const response = await fetch('/api/generate', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ query: query })
-        });
-
-        if (!response.ok) {
-          throw new Error(`请求失败，状态码: ${response.status}`);
-        }
-
-        // 读取响应文本（SSE 格式）
-        const textData = await response.text();
-        let extractedText = '';
-
-        // 提取流数据中的 content 字段
-        const lines = textData.split('\n');
-        for (const line of lines) {
-          if (line.startsWith('data:')) {
-            try {
-              const jsonStr = line.slice(5).trim();
-              if (jsonStr && jsonStr !== '[DONE]') {
-                const parsed = JSON.parse(jsonStr);
-                if (parsed.content) {
-                  extractedText += parsed.content;
-                } else if (parsed.message && parsed.message.content) {
-                  extractedText += parsed.message.content;
-                }
-              }
-            } catch (e) {
-              // 忽略无法直接 parse 的行
+            const query = input.value.trim();
+            if (!query) {
+                alert('请输入查询内容');
+                return;
             }
-          }
+
+            // UI 状态更新
+            btn.disabled = true;
+            statusBadge.className = 'status-badge loading';
+            statusBadge.innerText = '生成中...';
+            resultContent.innerText = '';
+
+            try {
+                const response = await fetch('https://74q7m3vpzh.coze.site/stream_run', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': 'Bearer sat_5DrYitM0jXHyrHlLdRAdflKpYFVK0CiJnK3huw4O6SOUm2ETzbZyMRbrcaKNy3HS',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ input: query })
+                });
+
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errText}`);
+                }
+
+                // 处理 SSE 数据流 / 普通文本响应
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let fullText = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    const lines = chunk.split('\n');
+
+                    for (const line of lines) {
+                        if (line.startsWith('data:')) {
+                            const jsonStr = line.replace(/^data:\s*/, '').trim();
+                            if (jsonStr) {
+                                try {
+                                    const parsed = JSON.parse(jsonStr);
+                                    if (parsed.content) {
+                                        fullText += parsed.content;
+                                        resultContent.innerText = fullText;
+                                    } else if (parsed.message) {
+                                        fullText += parsed.message;
+                                        resultContent.innerText = fullText;
+                                    }
+                                } catch (e) {
+                                    fullText += jsonStr;
+                                    resultContent.innerText = fullText;
+                                }
+                            }
+                        } else if (line.trim() && !line.startsWith('event:')) {
+                            fullText += line + '\n';
+                            resultContent.innerText = fullText;
+                        }
+                    }
+                }
+
+                if (!fullText) {
+                    resultContent.innerText = "生成完成，但未返回文本内容。";
+                }
+
+                statusBadge.style.display = 'none';
+
+            } catch (err) {
+                statusBadge.className = 'status-badge error';
+                statusBadge.innerText = '出错了';
+                resultContent.innerHTML = `<span style="color: #e53e3e;">请求失败: ${err.message}</span>`;
+            } finally {
+                btn.disabled = false;
+            }
         }
-
-        // 如果没有解析出特定 data 格式，直接过滤原文本展示
-        if (!extractedText.trim()) {
-          extractedText = textData.replace(/event:.*?\n/g, '').replace(/data:\s*/g, '');
-        }
-
-        // 使用 marked 渲染结果
-        resultEl.innerHTML = typeof marked !== 'undefined' ? marked.parse(extractedText) : extractedText;
-        
-        statusEl.textContent = '生成完毕';
-        statusEl.style.background = '#f0fff4';
-        statusEl.style.color = '#38a169';
-
-      } catch (err) {
-        resultEl.innerHTML = `<span style="color: #e53e3e;">生成失败：${err.message}</span>`;
-        statusEl.textContent = '请求异常';
-        statusEl.style.background = '#fff5f5';
-        statusEl.style.color = '#e53e3e';
-      } finally {
-        btnEl.disabled = false;
-      }
-    }
-  </script>
+    </script>
 </body>
-</html>  
+</html>
