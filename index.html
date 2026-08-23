@@ -1,286 +1,175 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Creator Finder</title>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex; flex-direction: column; align-items: center;
-            padding: 40px 20px;
-        }
-        .container { width: 100%; max-width: 800px; }
-        .header { text-align: center; margin-bottom: 32px; }
-        .header h1 { color: #fff; font-size: 2.5rem; font-weight: 700; margin-bottom: 12px; text-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .header p { color: rgba(255,255,255,0.85); font-size: 1.1rem; line-height: 1.6; }
-
-        .settings-bar {
-            background: rgba(255,255,255,0.15); backdrop-filter: blur(10px);
-            border-radius: 12px; padding: 16px 20px; margin-bottom: 20px;
-            display: flex; gap: 12px; align-items: center; flex-wrap: wrap;
-        }
-        .settings-bar label { color: #fff; font-size: 0.85rem; font-weight: 500; white-space: nowrap; }
-        .settings-bar input {
-            flex: 1; min-width: 200px; padding: 8px 14px;
-            border: 1px solid rgba(255,255,255,0.3); border-radius: 8px;
-            background: rgba(255,255,255,0.9); color: #333; font-size: 0.85rem;
-            outline: none; transition: all 0.2s;
-        }
-        .settings-bar input:focus { border-color: #fff; background: #fff; }
-        .settings-bar input::placeholder { color: #999; }
-        .settings-toggle {
-            color: rgba(255,255,255,0.7); font-size: 0.8rem; cursor: pointer;
-            text-decoration: underline; margin-left: auto;
-        }
-        .settings-toggle:hover { color: #fff; }
-
-        .input-section {
-            background: #fff; border-radius: 16px; padding: 32px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15); margin-bottom: 24px;
-        }
-        .input-group { display: flex; gap: 12px; align-items: stretch; }
-        .input-field {
-            flex: 1; padding: 16px 20px; border: 2px solid #e8e8e8;
-            border-radius: 12px; font-size: 1rem; color: #333;
-            transition: all 0.3s ease; outline: none;
-        }
-        .input-field:focus { border-color: #667eea; box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1); }
-        .input-field::placeholder { color: #aaa; }
-        .generate-btn {
-            padding: 16px 32px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: #fff; border: none; border-radius: 12px; font-size: 1rem;
-            font-weight: 600; cursor: pointer; transition: all 0.3s ease;
-            white-space: nowrap; min-width: 120px;
-        }
-        .generate-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4); }
-        .generate-btn:active { transform: translateY(0); }
-        .generate-btn:disabled { opacity: 0.7; cursor: not-allowed; transform: none; box-shadow: none; }
-        .hint { margin-top: 16px; color: #666; font-size: 0.9rem; line-height: 1.5; }
-        .hint strong { color: #444; }
-
-        .result-section {
-            background: #fff; border-radius: 16px; padding: 32px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.15); display: none;
-        }
-        .result-section.visible { display: block; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .result-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid #eee; }
-        .result-title { font-size: 1.2rem; font-weight: 600; color: #333; }
-        .result-status { font-size: 0.85rem; padding: 4px 12px; border-radius: 20px; font-weight: 500; }
-        .result-status.loading { background: #fff3cd; color: #856404; }
-        .result-status.done { background: #d4edda; color: #155724; }
-        .result-status.error { background: #f8d7da; color: #721c24; }
-        .result-content { color: #333; line-height: 1.8; font-size: 0.95rem; }
-        .result-content h1, .result-content h2, .result-content h3 { color: #222; margin-top: 24px; margin-bottom: 12px; }
-        .result-content h1 { font-size: 1.5rem; }
-        .result-content h2 { font-size: 1.3rem; }
-        .result-content h3 { font-size: 1.1rem; }
-        .result-content p { margin-bottom: 12px; }
-        .result-content ul, .result-content ol { margin-bottom: 12px; padding-left: 24px; }
-        .result-content li { margin-bottom: 6px; }
-        .result-content strong { color: #222; }
-        .result-content code { background: #f5f5f5; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; }
-        .result-content table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
-        .result-content th, .result-content td { border: 1px solid #e8e8e8; padding: 10px 14px; text-align: left; }
-        .result-content th { background: #f8f9fa; font-weight: 600; }
-        .result-content hr { border: none; border-top: 1px solid #eee; margin: 20px 0; }
-        .loading-dots { display: inline-flex; gap: 4px; align-items: center; }
-        .loading-dots span { width: 6px; height: 6px; background: #667eea; border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
-        .loading-dots span:nth-child(1) { animation-delay: -0.32s; }
-        .loading-dots span:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes bounce { 0%, 80%, 100% { transform: scale(0); } 40% { transform: scale(1); } }
-        @media (max-width: 600px) {
-            .header h1 { font-size: 1.8rem; }
-            .input-group { flex-direction: column; }
-            .generate-btn { width: 100%; }
-            .input-section, .result-section { padding: 20px; }
-            .settings-bar { flex-direction: column; align-items: stretch; }
-            .settings-toggle { margin-left: 0; text-align: center; }
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Creator Finder</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    .container { width: 100%; max-width: 800px; }
+    .header { text-align: center; margin-bottom: 32px; color: #fff; }
+    .header h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 12px; }
+    .header p { font-size: 1.1rem; opacity: 0.85; }
+    
+    .card {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 16px;
+      padding: 32px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      margin-bottom: 24px;
+    }
+    
+    .input-group { display: flex; gap: 12px; margin-bottom: 16px; }
+    .input-group input {
+      flex: 1;
+      padding: 14px 20px;
+      border: 2px solid #e2e8f0;
+      border-radius: 10px;
+      font-size: 1rem;
+      outline: none;
+      transition: all 0.3s;
+    }
+    .input-group input:focus { border-color: #667eea; }
+    .input-group button {
+      padding: 14px 28px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.3s;
+    }
+    .input-group button:hover { opacity: 0.9; }
+    .input-group button:disabled { opacity: 0.6; cursor: not-allowed; }
+    
+    .hint { font-size: 0.875rem; color: #718096; }
+    
+    .result-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: #2d3748;
+      margin-bottom: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .status-tag {
+      font-size: 0.75rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: #edf2f7;
+      color: #4a5568;
+    }
+    
+    #result-content {
+      color: #2d3748;
+      line-height: 1.7;
+      min-height: 100px;
+      word-break: break-word;
+    }
+    #result-content p { margin-bottom: 12px; }
+    #result-content ul, #result-content ol { padding-left: 20px; margin-bottom: 12px; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>AI Creator Finder</h1>
-            <p>帮助海外 AI 产品运营人员，在找达人之前快速确定「应该找什么样的达人」</p>
-        </div>
-
-        <div class="settings-bar" id="settingsBar">
-            <label>API 地址</label>
-            <input type="text" id="apiUrl" placeholder="https://your-app.coze.site">
-            <label>Token</label>
-            <input type="password" id="apiToken" placeholder="输入 API Token">
-            <span class="settings-toggle" id="settingsToggle" onclick="toggleSettings()">收起</span>
-        </div>
-
-        <div class="input-section">
-            <div class="input-group">
-                <input type="text" class="input-field" id="userInput"
-                    placeholder="例如：AI PPT生成工具 + 美国 + TikTok" autocomplete="off">
-                <button class="generate-btn" id="generateBtn" onclick="handleGenerate()">Generate</button>
-            </div>
-            <div class="hint"><strong>输入格式：</strong>AI 产品名称 + 目标国家 + 社交媒体平台</div>
-        </div>
-
-        <div class="result-section" id="resultSection">
-            <div class="result-header">
-                <span class="result-title">生成结果</span>
-                <span class="result-status loading" id="resultStatus">
-                    <span class="loading-dots"><span></span><span></span><span></span></span> 生成中
-                </span>
-            </div>
-            <div class="result-content" id="resultContent"></div>
-        </div>
+  <div class="container">
+    <div class="header">
+      <h1>AI Creator Finder</h1>
+      <p>帮助海外 AI 产品运营人员，在找达人之前快速确定「应该找什么样的达人」</p>
     </div>
 
-    <script>
-        const userInput = document.getElementById('userInput');
-        const generateBtn = document.getElementById('generateBtn');
-        const resultSection = document.getElementById('resultSection');
-        const resultContent = document.getElementById('resultContent');
-        const resultStatus = document.getElementById('resultStatus');
-        const apiUrlInput = document.getElementById('apiUrl');
-        const apiTokenInput = document.getElementById('apiToken');
-        const settingsBar = document.getElementById('settingsBar');
+    <div class="card">
+      <div class="input-group">
+        <input type="text" id="query-input" placeholder="例如：ChatGPT, 美国, TikTok" />
+        <button id="generate-btn" onclick="handleGenerate()">Generate</button>
+      </div>
+      <div class="hint">输入格式：AI 产品名称 + 目标国家 + 社交媒体平台</div>
+    </div>
 
-        let abortController = null;
+    <div class="card">
+      <div class="result-title">
+        <span>生成结果</span>
+        <span class="status-tag" id="status-tag">等待输入</span>
+      </div>
+      <div id="result-content">未收到有效响应，请稍后重试。</div>
+    </div>
+  </div>
 
-        // Load saved settings from localStorage
-        const savedUrl = localStorage.getItem('aicf_api_url') || '';
-        const savedToken = localStorage.getItem('aicf_api_token') || '';
-        apiUrlInput.value = savedUrl;
-        apiTokenInput.value = savedToken;
+  <script>
+    async function handleGenerate() {
+      const inputEl = document.getElementById('query-input');
+      const btnEl = document.getElementById('generate-btn');
+      const statusEl = document.getElementById('status-tag');
+      const resultEl = document.getElementById('result-content');
+      
+      const query = inputEl.value.trim();
+      if (!query) {
+        alert('请输入查询内容！');
+        return;
+      }
 
-        // Auto-hide settings if both are filled
-        if (savedUrl && savedToken) {
-            settingsBar.style.display = 'none';
-        }
+      // 禁用按钮并显示生成中状态
+      btnEl.disabled = true;
+      statusEl.textContent = '生成中...';
+      statusEl.style.background = '#ebf8ff';
+      statusEl.style.color = '#3182ce';
+      resultEl.innerHTML = '正在为您匹配推荐达人类型，请稍候...';
 
-        // Save settings on change
-        apiUrlInput.addEventListener('change', () => localStorage.setItem('aicf_api_url', apiUrlInput.value.trim()));
-        apiTokenInput.addEventListener('change', () => localStorage.setItem('aicf_api_token', apiTokenInput.value.trim()));
-
-        function toggleSettings() {
-            const isHidden = settingsBar.style.display === 'none';
-            settingsBar.style.display = isHidden ? 'flex' : 'none';
-            document.getElementById('settingsToggle').textContent = isHidden ? '收起' : '展开设置';
-        }
-
-        userInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !generateBtn.disabled) handleGenerate();
+      try {
+        // 请求 Cloudflare Pages/Functions 绑定的 /api/generate 路由
+        const response = await fetch('/api/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: query })
         });
 
-        function setStatus(type, text) {
-            resultStatus.className = 'result-status ' + type;
-            resultStatus.innerHTML = type === 'loading'
-                ? '<span class="loading-dots"><span></span><span></span><span></span></span> ' + text
-                : text;
+        if (!response.ok) {
+          const errData = await response.json().catch(() => ({}));
+          throw new Error(errData.error || `请求失败，状态码: ${response.status}`);
         }
 
-        async function handleGenerate() {
-            const query = userInput.value.trim();
-            if (!query) { userInput.focus(); return; }
-
-            const baseUrl = apiUrlInput.value.trim();
-            const token = apiTokenInput.value.trim();
-
-            if (!baseUrl) {
-                settingsBar.style.display = 'flex';
-                document.getElementById('settingsToggle').textContent = '收起';
-                apiUrlInput.focus();
-                alert('请先填写 API 地址');
-                return;
-            }
-
-            if (abortController) abortController.abort();
-            abortController = new AbortController();
-
-            generateBtn.disabled = true;
-            generateBtn.textContent = 'Generating...';
-            resultSection.classList.add('visible');
-            resultContent.innerHTML = '';
-            setStatus('loading', '生成中');
-
-            let fullText = '';
-            const apiEndpoint = baseUrl.replace(/\/+$/, '') + '/stream_run';
-
-            try {
-                const headers = { 'Content-Type': 'application/json' };
-                if (token) headers['Authorization'] = 'Bearer ' + token;
-
-                const response = await fetch(apiEndpoint, {
-                    method: 'POST',
-                    headers: headers,
-                    body: JSON.stringify({ messages: [{ role: 'user', content: query }] }),
-                    signal: abortController.signal
-                });
-
-                if (response.status === 401) {
-                    throw new Error('认证失败 (401)：请检查 Token 是否正确');
-                }
-                if (!response.ok) {
-                    throw new Error('HTTP ' + response.status + ': ' + response.statusText);
-                }
-
-                const reader = response.body.getReader();
-                const decoder = new TextDecoder();
-                let buffer = '';
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop() || '';
-
-                    for (const line of lines) {
-                        if (line.startsWith('data: ')) {
-                            const dataStr = line.slice(6).trim();
-                            if (!dataStr || dataStr === '[DONE]') continue;
-                            try {
-                                const data = JSON.parse(dataStr);
-                                let chunk = '';
-                                if (data.type === 'answer' && data.content && data.content.answer) {
-                                    chunk = data.content.answer;
-                                } else if (data.type === 'assistant' && data.message && data.message.content) {
-                                    const content = data.message.content;
-                                    if (typeof content === 'string') chunk = content;
-                                    else if (Array.isArray(content)) {
-                                        chunk = content.filter(c => c && c.type === 'text').map(c => c.text || '').join('');
-                                    }
-                                }
-                                if (chunk) {
-                                    fullText += chunk;
-                                    resultContent.innerHTML = marked.parse(fullText);
-                                }
-                            } catch (e) { /* skip */ }
-                        }
-                    }
-                }
-
-                if (fullText) {
-                    setStatus('done', '已完成');
-                } else {
-                    setStatus('error', '无响应内容');
-                    resultContent.innerHTML = '<p style="color:#999;">未收到有效响应，请检查 API 地址和 Token 后重试。</p>';
-                }
-            } catch (err) {
-                if (err.name === 'AbortError') return;
-                console.error('Stream error:', err);
-                setStatus('error', '出错了');
-                resultContent.innerHTML = '<p style="color:#dc3545;">请求失败：' + err.message + '</p>';
-            } finally {
-                generateBtn.disabled = false;
-                generateBtn.textContent = 'Generate';
-                abortController = null;
-            }
+        const data = await response.json();
+        
+        // 兼容处理 Coze 或 Worker 返回的数据字段
+        let finalContent = '';
+        if (typeof data === 'string') {
+          finalContent = data;
+        } else if (data.content) {
+          finalContent = data.content;
+        } else if (data.data) {
+          finalContent = typeof data.data === 'string' ? data.data : JSON.stringify(data.data, null, 2);
+        } else {
+          finalContent = JSON.stringify(data, null, 2);
         }
-    </script>
+
+        // 使用 marked 渲染 Markdown 文本
+        resultEl.innerHTML = typeof marked !== 'undefined' ? marked.parse(finalContent) : finalContent;
+        
+        statusEl.textContent = '生成完毕';
+        statusEl.style.background = '#f0fff4';
+        statusEl.style.color = '#38a169';
+
+      } catch (err) {
+        resultEl.innerHTML = `<span style="color: #e53e3e;">生成失败：${err.message}</span>`;
+        statusEl.textContent = '请求异常';
+        statusEl.style.background = '#fff5f5';
+        statusEl.style.color = '#e53e3e';
+      } finally {
+        btnEl.disabled = false;
+      }
+    }
+  </script>
 </body>
 </html>
