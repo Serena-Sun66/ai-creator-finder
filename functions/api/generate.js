@@ -1,7 +1,6 @@
 export async function onRequestPost(context) {
   const { request, env } = context;
 
-  // 统一跨域与 JSON 响应头
   const headers = {
     "Access-Control-Allow-Origin": "*",
     "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
@@ -24,7 +23,7 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ error: "Cloudflare 环境变量未配置 COZE_API_URL 或 COZE_API_TOKEN" }), { status: 500, headers });
     }
 
-    // 请求 Coze API
+    // 同时补充 input 和 query 参数，确保 Coze API 能正常接收
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
@@ -32,8 +31,9 @@ export async function onRequestPost(context) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
+        input: query,
         query: query,
-        parameters: { query: query }
+        parameters: { input: query, query: query }
       })
     });
 
@@ -45,7 +45,6 @@ export async function onRequestPost(context) {
   }
 }
 
-// 支持 OPTIONS 预检请求
 export async function onRequestOptions() {
   return new Response(null, {
     status: 200,
