@@ -23,12 +23,12 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ error: "Cloudflare 环境变量未配置" }), { status: 500, headers });
     }
 
-    // 如果环境变量里的 URL 没有指向 /stream_run，自动拼接 /stream_run
+    // 清理多余的斜杠与重复的 /stream_run
+    apiUrl = apiUrl.trim().replace(/\/+$/, '');
     if (!apiUrl.endsWith('/stream_run')) {
-      apiUrl = apiUrl.replace(/\/+$/, '') + '/stream_run';
+      apiUrl = apiUrl + '/stream_run';
     }
 
-    // 严苛按照后端需要的 JSON 格式：{ "input": "..." }
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
@@ -38,8 +38,13 @@ export async function onRequestPost(context) {
       body: JSON.stringify({ input: query })
     });
 
+    if (!response.ok) {
+      const errText = await response.text();
+      return new Response(JSON.stringify({ error: `Coze API 请求失败: HTTP ${response.status} ${errText}` }), { status: response.status, headers });
+    }
+
     const data = await response.text();
-    return new Response(data, { status: response.status, headers });
+    return new Response(data, { status: 200, headers });
 
   } catch (err) {
     return new Response(JSON.stringify({ error: "Pages Function 运行错误: " + err.message }), { status: 500, headers });
