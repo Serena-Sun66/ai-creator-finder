@@ -20,21 +20,33 @@ export async function onRequestPost(context) {
     const apiToken = env.COZE_API_TOKEN;
 
     if (!apiUrl || !apiToken) {
-      return new Response(JSON.stringify({ error: "Cloudflare 环境变量未配置 COZE_API_URL 或 COZE_API_TOKEN" }), { status: 500, headers });
+      return new Response(JSON.stringify({ error: "Cloudflare 环境变量未配置" }), { status: 500, headers });
     }
 
-    // 同时补充 input 和 query 参数，确保 Coze API 能正常接收
+    // 覆盖所有 Coze 智能体/工作流可能需要的参数结构
+    const cozePayload = {
+      parameters: {
+        input: query,
+        query: query
+      },
+      input: query,
+      query: query,
+      additional_messages: [
+        {
+          role: "user",
+          content: query,
+          content_type: "text"
+        }
+      ]
+    };
+
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiToken}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify({
-        input: query,
-        query: query,
-        parameters: { input: query, query: query }
-      })
+      body: JSON.stringify(cozePayload)
     });
 
     const data = await response.text();
