@@ -23,21 +23,11 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ error: "Cloudflare 环境变量未配置" }), { status: 500, headers });
     }
 
-    // 覆盖所有 Coze 智能体/工作流可能需要的参数结构
+    // 严苛遵循 Coze Workflow/Bot 标准格式：参数必须仅放在 parameters 对象内部
     const cozePayload = {
       parameters: {
-        input: query,
-        query: query
-      },
-      input: query,
-      query: query,
-      additional_messages: [
-        {
-          role: "user",
-          content: query,
-          content_type: "text"
-        }
-      ]
+        input: query
+      }
     };
 
     const response = await fetch(apiUrl, {
