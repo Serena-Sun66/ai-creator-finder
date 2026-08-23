@@ -120,7 +120,6 @@
         return;
       }
 
-      // 禁用按钮并显示生成中状态
       btnEl.disabled = true;
       statusEl.textContent = '生成中...';
       statusEl.style.background = '#ebf8ff';
@@ -128,7 +127,6 @@
       resultEl.innerHTML = '正在为您匹配推荐达人类型，请稍候...';
 
       try {
-        // 请求 Cloudflare Pages/Functions 绑定的 /api/generate 路由
         const response = await fetch('/api/generate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -136,26 +134,40 @@
         });
 
         if (!response.ok) {
-          const errData = await response.json().catch(() => ({}));
-          throw new Error(errData.error || `请求失败，状态码: ${response.status}`);
+          throw new Error(`请求失败，状态码: ${response.status}`);
         }
 
-        const data = await response.json();
-        
-        // 兼容处理 Coze 或 Worker 返回的数据字段
-        let finalContent = '';
-        if (typeof data === 'string') {
-          finalContent = data;
-        } else if (data.content) {
-          finalContent = data.content;
-        } else if (data.data) {
-          finalContent = typeof data.data === 'string' ? data.data : JSON.stringify(data.data, null, 2);
-        } else {
-          finalContent = JSON.stringify(data, null, 2);
+        // 读取响应文本（SSE 格式）
+        const textData = await response.text();
+        let extractedText = '';
+
+        // 提取流数据中的 content 字段
+        const lines = textData.split('\n');
+        for (const line of lines) {
+          if (line.startsWith('data:')) {
+            try {
+              const jsonStr = line.slice(5).trim();
+              if (jsonStr && jsonStr !== '[DONE]') {
+                const parsed = JSON.parse(jsonStr);
+                if (parsed.content) {
+                  extractedText += parsed.content;
+                } else if (parsed.message && parsed.message.content) {
+                  extractedText += parsed.message.content;
+                }
+              }
+            } catch (e) {
+              // 忽略无法直接 parse 的行
+            }
+          }
         }
 
-        // 使用 marked 渲染 Markdown 文本
-        resultEl.innerHTML = typeof marked !== 'undefined' ? marked.parse(finalContent) : finalContent;
+        // 如果没有解析出特定 data 格式，直接过滤原文本展示
+        if (!extractedText.trim()) {
+          extractedText = textData.replace(/event:.*?\n/g, '').replace(/data:\s*/g, '');
+        }
+
+        // 使用 marked 渲染结果
+        resultEl.innerHTML = typeof marked !== 'undefined' ? marked.parse(extractedText) : extractedText;
         
         statusEl.textContent = '生成完毕';
         statusEl.style.background = '#f0fff4';
