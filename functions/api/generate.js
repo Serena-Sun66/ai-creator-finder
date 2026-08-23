@@ -16,27 +16,26 @@ export async function onRequestPost(context) {
       return new Response(JSON.stringify({ error: "请求参数为空" }), { status: 400, headers });
     }
 
-    const apiUrl = env.COZE_API_URL;
+    let apiUrl = env.COZE_API_URL;
     const apiToken = env.COZE_API_TOKEN;
 
     if (!apiUrl || !apiToken) {
       return new Response(JSON.stringify({ error: "Cloudflare 环境变量未配置" }), { status: 500, headers });
     }
 
-    // 严苛遵循 Coze Workflow/Bot 标准格式：参数必须仅放在 parameters 对象内部
-    const cozePayload = {
-      parameters: {
-        input: query
-      }
-    };
+    // 如果环境变量里的 URL 没有指向 /stream_run，自动拼接 /stream_run
+    if (!apiUrl.endsWith('/stream_run')) {
+      apiUrl = apiUrl.replace(/\/+$/, '') + '/stream_run';
+    }
 
+    // 严苛按照后端需要的 JSON 格式：{ "input": "..." }
     const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Authorization": `Bearer ${apiToken}`,
         "Content-Type": "application/json"
       },
-      body: JSON.stringify(cozePayload)
+      body: JSON.stringify({ input: query })
     });
 
     const data = await response.text();
